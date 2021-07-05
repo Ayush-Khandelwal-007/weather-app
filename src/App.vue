@@ -2,16 +2,29 @@
   <div id="app">
     <main>
       <div class="search-box">
-        <input type="text" class="search-bar" placeholder="Search for the desired location..."/>
+        <input
+          type="text"
+          class="search-bar"
+          placeholder="Search for the desired location..."
+          v-model="query"
+          @keypress="keyDown"
+        />
+        <button><img :src='"./assets/search.svg"' class="search" v-on:click="fetchWeather"/></button>
       </div>
-      <div class="weather-root">
+      <div class="weather-root" v-if="typeof weather.main != `undefined`">
         <div class="info-container">
-          <div class="location">Faridabad</div>
-          <div class="date">Monday 5 July 2021</div>
+          <div class="location">
+            {{ weather.name }},{{countryName}}
+            <span>( {{ weather.coord.lon }} , {{ weather.coord.lat }} )</span>
+          </div>
+          <div class="date">{{ today() }}</div>
         </div>
         <div class="weather-box">
-          <div class="temp">43°c</div>
-          <div class="weather">Sunny</div>
+          <div class="temp">
+            <img class="icon" :src="iconSrc" />
+            {{ Math.round(weather.main.temp * 10) / 10 }}°c
+          </div>
+          <div class="weather">{{ weather.weather[0].main }}</div>
         </div>
       </div>
     </main>
@@ -19,21 +32,78 @@
 </template>
 
 <script>
-
 export default {
-  name: 'App',
-  data (){
-    return{
-      api_key:'593210a225d49521802201d5fd34bdd2'
-    }
-  }
-}
+  name: "App",
+  data() {
+    return {
+      api_key: "593210a225d49521802201d5fd34bdd2",
+      base_url: "http://api.openweathermap.org/data/2.5",
+      query: "",
+      weather: {},
+      iconSrc: "",
+      countryName:"",
+    };
+  },
+  methods: {
+    keyDown (e){
+      if (e.key == "Enter") {
+        this.fetchWeather();
+      }
+    },
+    fetchWeather() {
+        fetch(
+          `${this.base_url}/weather?q=${this.query}&units=metric&APPID=${this.api_key}`
+        )
+          .then((data) => {
+            return data.json();
+          })
+          .then((results) => {
+            console.log(results)
+            this.weather = results;
+            let regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
+            this.countryName=regionNames.of(results.sys.country);
+            this.iconSrc = `http://openweathermap.org/img/wn/${results.weather[0].icon}@2x.png`;
+          });
+    },
+    today() {
+      let d = new Date();
+      let months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      let days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      let day = days[d.getDay()];
+      let date = d.getDate();
+      let month = months[d.getMonth()];
+      let year = d.getFullYear();
+      return `${day} ${date} ${month} ${year}`;
+    },
+  },
+};
 </script>
 
 <style>
-*{
-  margin:0px;
-  padding:0px;
+* {
+  margin: 0px;
+  padding: 0px;
   box-sizing: border-box;
 }
 body {
@@ -41,26 +111,30 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-#app{
-  background:url('./assets/hotBg.jpeg');
-  background-repeat:no-repeat;
-  background-size:cover;
+#app {
+  background: url("./assets/hotBg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
   background-position: top;
-  height:100vh;
-  transition:0.6s;
+  height: 100vh;
+  transition: 0.6s;
 }
-main{
-  min-height:100vh;
-  padding:2rem;
-  background-image: linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,0.75));
+main {
+  min-height: 100vh;
+  padding: 2rem;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.75)
+  );
 }
-.search-box{
-  width:100%;
+.search-box {
+  width: 100%;
   margin: 2rem 0px;
-  display:flex;
-  justify-content:center;
+  display: flex;
+  justify-content: center;
 }
-.search-bar{
+.search-bar {
   display: block;
   width: 100%;
   max-width: 800px;
@@ -69,11 +143,11 @@ main{
   display: block;
   width: 100%;
   padding: 1rem;
-  
+
   color: #010101;
   font-size: 1.25rem;
   appearance: none;
-  border:none;
+  border: none;
   outline: none;
   background: none;
   box-shadow: 0px 0px 0.5rem rgba(0, 0, 0, 0.25);
@@ -87,14 +161,18 @@ main{
   border-radius: 0px 1rem 0px 1rem;
 }
 .info-container .location {
-  color: #FFF;
+  color: #fff;
   font-size: 2rem;
   font-weight: 500;
   text-align: center;
   text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
 }
+
+.location > span {
+  font-size: 1rem;
+}
 .info-container .date {
-  color: #FFF;
+  color: #fff;
   font-size: 1.25rem;
   font-weight: 300;
   font-style: italic;
@@ -106,21 +184,35 @@ main{
 .weather-box .temp {
   display: inline-block;
   padding: 0.75rem 1.55rem;
-  color: #FFF;
+  color: #fff;
   font-size: 8rem;
   font-weight: 900;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
-  background-color:rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.5);
   border-radius: 1rem;
   margin: 2rem 0px;
   box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
   cursor: default;
 }
 .weather-box .weather {
-  color: #FFF;
+  color: #fff;
   font-size: 3rem;
   font-weight: 700;
   font-style: italic;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
+.icon {
+  position: absolute;
+  transform: translate(-60%, -53%) rotate(-38deg) scale(1.3);
+}
+.search {
+  width:3rem;
+  cursor: pointer;
+  transform:rotateY(180deg);
+}
+button {
+  background:transparent;
+  border: none;
+  margin-left:1rem ;
 }
 </style>
