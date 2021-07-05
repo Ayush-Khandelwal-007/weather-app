@@ -1,11 +1,11 @@
 <template>
-  <div id="app">
+  <div id="app" :class="typeof weather.main!== 'undefined' && weather.main.temp > 20 ?'warm':''">
     <main>
       <div class="search-box">
         <input
           type="text"
           class="search-bar"
-          placeholder="Search for the desired location..."
+          placeholder="Search for the desired city..."
           v-model="query"
           @keypress="keyDown"
         />
@@ -27,6 +27,13 @@
           <div class="weather">{{ weather.weather[0].main }}</div>
         </div>
       </div>
+      <div class="weather-root" v-if="error">
+        <div class="weather-box">
+          <div class="error">
+            Oops No city with this name found.
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -39,9 +46,10 @@ export default {
       api_key: "593210a225d49521802201d5fd34bdd2",
       base_url: "http://api.openweathermap.org/data/2.5",
       query: "",
-      weather: {},
+      weather: {temp:'data'},
       iconSrc: "",
       countryName:"",
+      error:false,
     };
   },
   methods: {
@@ -63,6 +71,10 @@ export default {
             let regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
             this.countryName=regionNames.of(results.sys.country);
             this.iconSrc = `http://openweathermap.org/img/wn/${results.weather[0].icon}@2x.png`;
+          })
+          .catch(error =>{
+            console.log(error);
+            this.error = true;
           });
     },
     today() {
@@ -112,10 +124,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 #app {
+  background: url("./assets/coldBg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: bottom;
+  height: 100vh;
+  transition: 0.6s;
+}
+#app.warm {
   background: url("./assets/hotBg.jpeg");
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: top;
+  background-position: bottom;
   height: 100vh;
   transition: 0.6s;
 }
@@ -194,6 +214,20 @@ main {
   box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
   cursor: default;
 }
+
+.error{
+  display: inline-block;
+  padding: 0.75rem 1.55rem;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 900;
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 1rem;
+  margin: 2rem 0px;
+  box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+  cursor: default;
+}
 .weather-box .weather {
   color: #fff;
   font-size: 3rem;
@@ -206,12 +240,14 @@ main {
   transform: translate(-60%, -53%) rotate(-38deg) scale(1.3);
 }
 .search {
-  width:3rem;
+  width:2rem;
   cursor: pointer;
   transform:rotateY(180deg);
 }
 button {
-  background:transparent;
+  background:rgba(0, 0, 0, 0.25);
+  padding: 0.4rem 0.8rem;
+  border-radius:5px;
   border: none;
   margin-left:1rem ;
 }
